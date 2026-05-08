@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Gray Team Content Portal</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#F7F6F2;
+  --surface:#FFFFFF;
+  --border:#E4E1D8;
+  --text:#1A1916;
+  --text-muted:#7A776E;
+  --accent-light:#F0EDE6;
+  --green:#2D6A4F;
+  --green-light:#D8EDDF;
+  --amber:#92400E;
+  --amber-light:#FEF3C7;
+  --blue:#1E3A8A;
+  --blue-light:#DBEAFE;
+  --red:#991B1B;
+  --red-light:#FEE2E2;
+  --castor:#6B4F8A;
+  --castor-light:#EDE9F5;
+  --radius:8px;
+  --radius-lg:14px;
+  --shadow:0 1px 3px rgba(0,0,0,0.08),0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md:0 4px 12px rgba(0,0,0,0.08),0 2px 4px rgba(0,0,0,0.04);
+}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;min-height:100vh}
+h1,h2,h3{font-family:'DM Serif Display',serif;font-weight:400}
+button{cursor:pointer;font-family:'DM Sans',sans-serif;font-size:14px;border:none;outline:none}
+textarea,input,select{font-family:'DM Sans',sans-serif;font-size:14px;outline:none}
+#root{min-height:100vh}
+.app{display:flex;flex-direction:column;min-height:100vh}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 28px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.topbar-logo{font-family:'DM Serif Display',serif;font-size:18px;color:var(--text);letter-spacing:-0.3px}
+.topbar-logo span{color:var(--text-muted);font-style:italic}
+.topbar-right{display:flex;align-items:center;gap:12px}
+.avatar{width:32px;height:32px;border-radius:50%;background:var(--text);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;letter-spacing:0.5px}
+.user-name{font-size:13px;color:var(--text-muted)}
+.signout-btn{font-size:12px;color:var(--text-muted);background:none;border:none;cursor:pointer;padding:4px 8px}
+.signout-btn:hover{color:var(--text)}
+.nav{background:var(--surface);border-bottom:1px solid var(--border);padding:0 28px;display:flex;gap:0}
+.nav-tab{padding:12px 18px;font-size:13px;font-weight:500;color:var(--text-muted);border-bottom:2px solid transparent;background:none;transition:all 0.15s;cursor:pointer}
+.nav-tab:hover{color:var(--text)}
+.nav-tab.active{color:var(--text);border-bottom-color:var(--text)}
+.main{flex:1;padding:28px;max-width:1280px;width:100%;margin:0 auto}
+.filter-bar{display:flex;align-items:center;gap:8px;margin-bottom:24px;flex-wrap:wrap}
+.filter-label{font-size:11px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:0.7px;margin-right:4px}
+.filter-chip{padding:5px 12px;border-radius:20px;font-size:12px;font-weight:500;border:1.5px solid var(--border);background:var(--surface);color:var(--text-muted);transition:all 0.15s;cursor:pointer}
+.filter-chip:hover{border-color:var(--text);color:var(--text)}
+.filter-chip.active{background:var(--text);color:#fff;border-color:var(--text)}
+.filter-chip.castor.active{background:var(--castor);border-color:var(--castor);color:#fff}
+.filter-chip.chris.active{background:var(--blue);border-color:var(--blue);color:#fff}
+.filter-chip.evy.active{background:var(--green);border-color:var(--green);color:#fff}
+.filter-chip.kody.active{background:var(--amber);border-color:var(--amber);color:#fff}
+.filter-chip.trey.active{background:#374151;border-color:#374151;color:#fff}
+.calendar-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.calendar-header h2{font-size:22px}
+.cal-nav{display:flex;align-items:center;gap:6px}
+.cal-nav button{height:32px;border-radius:var(--radius);border:1px solid var(--border);background:var(--surface);color:var(--text);display:flex;align-items:center;justify-content:center;font-size:14px;transition:all 0.15s;padding:0 10px}
+.cal-nav button:hover{background:var(--accent-light)}
+.cal-nav .arrow{width:32px;padding:0}
+.cal-nav .today-btn{font-size:12px;font-weight:500}
+.week-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--border);border-radius:var(--radius-lg);overflow:hidden;border:1px solid var(--border)}
+.day-header{background:var(--surface);padding:10px 12px;text-align:center}
+.day-header .dow{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.8px;color:var(--text-muted)}
+.day-header .date{font-size:18px;font-family:'DM Serif Display',serif;color:var(--text);margin-top:2px}
+.day-header .date.today{background:var(--text);color:#fff;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:2px auto 0;font-size:14px}
+.day-col{background:var(--surface);padding:8px;min-height:160px;display:flex;flex-direction:column;gap:6px}
+.day-col.today-col{background:#FAFAF7}
+.post-chip{border-radius:6px;padding:7px 9px;cursor:pointer;transition:all 0.15s;border:1px solid transparent}
+.post-chip:hover{filter:brightness(0.96);transform:translateY(-1px);box-shadow:var(--shadow)}
+.post-chip .chip-account{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:2px;opacity:0.8}
+.post-chip .chip-title{font-size:12px;font-weight:500;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.post-chip .chip-status{font-size:10px;margin-top:4px;opacity:0.8}
+.chip-castor{background:var(--castor-light);border-color:#D4C8EC;color:var(--castor)}
+.chip-chris{background:var(--blue-light);border-color:#BFDBFE;color:var(--blue)}
+.chip-evy{background:var(--green-light);border-color:#B7DFC7;color:var(--green)}
+.chip-kody{background:var(--amber-light);border-color:#FDE68A;color:var(--amber)}
+.chip-trey{background:#F3F4F6;border-color:#E5E7EB;color:#374151}
+.queue-list{display:flex;flex-direction:column;gap:12px}
+.queue-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px 20px;display:flex;align-items:flex-start;gap:16px;transition:all 0.15s;cursor:pointer}
+.queue-card:hover{box-shadow:var(--shadow-md);border-color:#CCCAB8}
+.queue-card-left{flex:1;min-width:0}
+.queue-card-meta{display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap}
+.account-badge{padding:3px 9px;border-radius:12px;font-size:11px;font-weight:600}
+.type-badge{padding:3px 8px;border-radius:12px;font-size:11px;background:var(--accent-light);color:var(--text-muted)}
+.queue-card-title{font-size:15px;font-weight:500;color:var(--text);margin-bottom:6px;line-height:1.4}
+.queue-card-preview{font-size:13px;color:var(--text-muted);line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.queue-card-footer{display:flex;align-items:center;gap:12px;margin-top:10px}
+.queue-card-date{font-size:12px;color:var(--text-muted)}
+.queue-card-right{display:flex;flex-direction:column;align-items:flex-end;gap:8px;min-width:100px;flex-shrink:0}
+.status-badge{padding:4px 10px;border-radius:12px;font-size:11px;font-weight:600;white-space:nowrap}
+.status-draft{background:var(--accent-light);color:var(--text-muted)}
+.status-reviewed{background:var(--green-light);color:var(--green)}
+.status-ready{background:var(--blue-light);color:var(--blue)}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(2px)}
+.modal{background:var(--surface);border-radius:var(--radius-lg);width:100%;max-width:720px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.15)}
+.modal-header{padding:22px 24px 18px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between;gap:16px;position:sticky;top:0;background:var(--surface);z-index:1}
+.modal-header-left{flex:1;min-width:0}
+.modal-header-meta{display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap}
+.modal-title{font-size:20px;font-family:'DM Serif Display',serif;color:var(--text);line-height:1.3}
+.modal-close{width:32px;height:32px;border-radius:var(--radius);border:1px solid var(--border);background:none;color:var(--text-muted);font-size:18px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.15s}
+.modal-close:hover{background:var(--accent-light)}
+.modal-body{padding:22px 24px}
+.modal-section{margin-bottom:20px}
+.modal-section-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.7px;color:var(--text-muted);margin-bottom:8px;display:flex;align-items:center;justify-content:space-between}
+.post-textarea{width:100%;border:1.5px solid var(--border);border-radius:var(--radius);padding:12px 14px;font-size:14px;line-height:1.6;color:var(--text);resize:vertical;min-height:160px;transition:border-color 0.15s;background:var(--bg)}
+.post-textarea:focus{border-color:var(--text)}
+.source-box{background:var(--accent-light);border-radius:var(--radius);padding:12px 14px;font-size:13px;color:var(--text-muted);line-height:1.5}
+.tags-row{display:flex;flex-wrap:wrap;gap:6px}
+.tag{padding:4px 10px;border-radius:12px;font-size:12px;background:var(--accent-light);color:var(--text-muted)}
+.modal-footer{padding:14px 24px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:12px;position:sticky;bottom:0;background:var(--surface)}
+.modal-footer-left{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.modal-footer-right{display:flex;align-items:center;gap:8px}
+.btn{padding:8px 16px;border-radius:var(--radius);font-size:13px;font-weight:500;transition:all 0.15s;display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-family:'DM Sans',sans-serif}
+.btn-primary{background:var(--text);color:#fff;border:1.5px solid var(--text)}
+.btn-primary:hover{background:#2D2C28}
+.btn-primary:disabled{opacity:0.5;cursor:not-allowed}
+.btn-secondary{background:var(--surface);color:var(--text);border:1.5px solid var(--border)}
+.btn-secondary:hover{background:var(--accent-light);border-color:#CCCAB8}
+.btn-green{background:var(--green);color:#fff;border:1.5px solid var(--green)}
+.btn-green:hover{background:#235A41}
+.btn-danger{background:var(--red-light);color:var(--red);border:1.5px solid #FECACA}
+.btn-danger:hover{background:#FEE2E2}
+.btn-sm{padding:5px 11px;font-size:12px}
+.btn-generate{background:linear-gradient(135deg,#6B4F8A,#1E3A8A);color:#fff;border:none;padding:10px 18px;border-radius:var(--radius);font-size:13px;font-weight:500;transition:all 0.2s;display:flex;align-items:center;gap:7px;cursor:pointer}
+.btn-generate:hover{opacity:0.9;transform:translateY(-1px)}
+.btn-generate:disabled{opacity:0.5;transform:none;cursor:not-allowed}
+.generate-panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:22px 24px;margin-bottom:24px}
+.generate-panel-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.generate-panel-header h3{font-size:16px;margin-bottom:2px}
+.generate-panel-header p{font-size:13px;color:var(--text-muted)}
+.generate-form{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:14px}
+.form-group{display:flex;flex-direction:column;gap:5px}
+.form-group label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.6px;color:var(--text-muted)}
+.form-select,.form-input,.form-textarea{border:1.5px solid var(--border);border-radius:var(--radius);padding:9px 11px;font-size:13px;color:var(--text);background:var(--bg);transition:border-color 0.15s}
+.form-select{appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%237A776E' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 11px center;padding-right:30px}
+.form-select:focus,.form-input:focus,.form-textarea:focus{border-color:var(--text)}
+.form-group-full{grid-column:1/-1}
+.form-textarea{resize:vertical;min-height:80px;line-height:1.5;font-family:'DM Sans',sans-serif}
+.generate-status{margin-top:12px;padding:11px 14px;border-radius:var(--radius);font-size:13px;display:flex;align-items:center;gap:8px}
+.generate-status.info{background:var(--amber-light);color:var(--amber)}
+.generate-status.success{background:var(--green-light);color:var(--green)}
+.generate-status.error{background:var(--red-light);color:var(--red)}
+.spinner{width:14px;height:14px;border:2px solid currentColor;border-top-color:transparent;border-radius:50%;animation:spin 0.8s linear infinite;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+.stats-row{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:24px}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px 18px}
+.stat-card .stat-num{font-family:'DM Serif Display',serif;font-size:28px;color:var(--text);line-height:1}
+.stat-card .stat-label{font-size:12px;color:var(--text-muted);margin-top:4px}
+.login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg);padding:20px}
+.login-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:48px 40px;width:100%;max-width:400px;text-align:center;box-shadow:var(--shadow-md)}
+.login-mark{font-family:'DM Serif Display',serif;font-size:32px;color:var(--text);margin-bottom:8px;letter-spacing:-0.5px}
+.login-mark span{font-style:italic;color:var(--text-muted)}
+.login-card p{color:var(--text-muted);font-size:14px;margin-bottom:32px;line-height:1.5}
+.btn-google{width:100%;padding:12px;border-radius:var(--radius);border:1.5px solid var(--border);background:var(--surface);color:var(--text);font-size:14px;font-weight:500;display:flex;align-items:center;justify-content:center;gap:10px;transition:all 0.15s;cursor:pointer;font-family:'DM Sans',sans-serif}
+.btn-google:hover{background:var(--accent-light);border-color:#CCCAB8}
+.google-icon{width:18px;height:18px}
+.login-footer{font-size:12px;color:var(--text-muted);margin-top:24px;font-style:italic}
+.empty-state{text-align:center;padding:60px 24px;color:var(--text-muted);background:var(--surface);border:1px dashed var(--border);border-radius:var(--radius-lg)}
+.empty-state h3{font-size:18px;color:var(--text);margin-bottom:8px}
+.empty-state p{font-size:13px;line-height:1.6;max-width:340px;margin:0 auto}
+.copy-btn{padding:5px 11px;border-radius:var(--radius);border:1.5px solid var(--border);background:var(--surface);color:var(--text-muted);font-size:11px;font-weight:500;transition:all 0.15s;cursor:pointer;font-family:'DM Sans',sans-serif}
+.copy-btn:hover{background:var(--green-light);color:var(--green);border-color:#B7DFC7}
+.copy-btn.copied{background:var(--green-light);color:var(--green);border-color:#B7DFC7}
+.api-warning{background:var(--amber-light);border:1px solid #FDE68A;border-radius:var(--radius);padding:12px 14px;margin-bottom:16px;font-size:13px;color:var(--amber);line-height:1.5}
+.api-warning strong{font-weight:600}
+@media(max-width:900px){
+  .generate-form{grid-template-columns:1fr 1fr}
+  .stats-row{grid-template-columns:repeat(3,1fr)}
+}
+@media(max-width:600px){
+  .main{padding:16px}
+  .topbar{padding:0 16px}
+  .nav{padding:0 16px}
+  .generate-form{grid-template-columns:1fr}
+  .stats-row{grid-template-columns:1fr 1fr}
+  .week-grid{display:flex;flex-direction:column}
+  .day-col{min-height:80px}
+}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { createClient } = supabase;
+
+const SUPABASE_URL = 'https://wtplzoqcssoualhazshq.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind0cGx6b3Fjc3NvdWFsaGF6c2hxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgwNjcyMzYsImV4cCI6MjA5MzY0MzIzNn0.V5I7vmvXVpIqJcbxh9IAHkTwQbSJFzj08Vf38aRH704';
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const ACCOUNTS = [
+  { id: 'castor', label: 'Castor Ventures', short: 'Castor', color: 'castor', types: ['LinkedIn Post'] },
+  { id: 'chris', label: 'Chris', short: 'Chris', color: 'chris', types: ['LinkedIn Post', 'Blog Post'] },
+  { id: 'evy', label: 'Evy', short: 'Evy', color: 'evy', types: ['LinkedIn Repost', 'Blog Post'] },
+  { id: 'kody', label: 'Kody', short: 'Kody', color: 'kody', types: ['LinkedIn Post', 'Blog Post'] },
+  { id: 'trey', label: 'Trey', short: 'Trey', color: 'trey', types: ['LinkedIn Post'] },
+];
+
+const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+function getWeekDates(baseDate) {
+  const d = new Date(baseDate);
+  const day = d.getDay();
+  const diff = d.getDate() - day;
+  const week = [];
+  for (let i = 0; i < 7; i++) {
+    const nd = new Date(d.getFullYear(), d.getMonth(), diff + i);
+    week.push(nd);
+  }
+  return week;
+}
+
+function formatDate(d) {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function isToday(d) {
+  const t = new Date();
+  return d.getDate()===t.getDate() && d.getMonth()===t.getMonth() && d.getFullYear()===t.getFullYear();
+}
+
+function getAccountInfo(id) {
+  return ACCOUNTS.find(a => a.id === id) || { label: id, short: id, color: 'trey' };
+}
+
+const App = () => {
+  const [session, setSession] = React.useState(null);
+  const [loading, setLoading] = React.useState(true);
+  const [tab, setTab] = React.useState('calendar');
+  const [posts, setPosts] = React.useState([]);
+  const [weekBase, setWeekBase] = React.useState(new Date());
+  const [filterAccount, setFilterAccount] = React.useState('all');
+  const [selectedPost, setSelectedPost] = React.useState(null);
+  const [editContent, setEditContent] = React.useState('');
+  const [generating, setGenerating] = React.useState(false);
+  const [genForm, setGenForm] = React.useState({ account: 'castor', type: 'LinkedIn Post', topic: '', context: '', date: '' });
+  const [genStatus, setGenStatus] = React.useState({ msg: '', kind: 'info' });
+  const [copied, setCopied] = React.useState(false);
+
+  React.useEffect(() => {
+    sb.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setLoading(false);
+    });
+    const { data: { subscription } } = sb.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+
+  React.useEffect(() => {
+    if (session) fetchPosts();
+  }, [session]);
+
+  React.useEffect(() => {
+    const acc = ACCOUNTS.find(a => a.id === genForm.account);
+    if (acc && !acc.types.includes(genForm.type)) {
+      setGenForm(f => ({ ...f, type: acc.types[0] }));
+    }
+  }, [genForm.account]);
+
+  async function fetchPosts() {
+    const { data, error } = await sb.from('posts').select('*').order('scheduled_date', { ascending: true });
+    if (!error && data) setPosts(data);
+  }
+
+  async function signIn() {
+    await sb.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: window.location.origin + window.location.pathname }
+    });
+  }
+
+  async function signOut() {
+    await sb.auth.signOut();
+    setSession(null);
+  }
+
+  async function generatePost() {
+    if (!genForm.topic.trim()) {
+      setGenStatus({ msg: 'Please enter a topic or news item.', kind: 'error' });
+      return;
+    }
+    setGenerating(true);
+    setGenStatus({ msg: 'Generating draft...', kind: 'info' });
+
+    try {
+      const { data: fnData, error: fnError } = await sb.functions.invoke('generate-content', {
+        body: {
+          account: genForm.account,
+          type: genForm.type,
+          topic: genForm.topic,
+          context: genForm.context,
+        }
+      });
+
+      if (fnError) throw new Error(fnError.message);
+      if (!fnData) throw new Error('No response from generation function.');
+
+      const parsed = fnData;
+
+      const sched = genForm.date ? new Date(genForm.date + 'T12:00:00') : (() => {
+        const t = new Date();
+        t.setDate(t.getDate() + 1);
+        return t;
+      })();
+
+      const { data: inserted, error } = await sb.from('posts').insert({
+        account: genForm.account,
+        type: genForm.type,
+        title: parsed.title || genForm.topic.slice(0, 80),
+        content: parsed.content || '',
+        hashtags: parsed.hashtags || [],
+        source_note: parsed.source_note || genForm.topic,
+        status: 'draft',
+        scheduled_date: formatDate(sched),
+        created_by: session.user.email,
+      }).select().single();
+
+      if (error) throw new Error(error.message);
+      if (inserted) {
+        setPosts(prev => [...prev, inserted]);
+        setGenStatus({ msg: 'Draft created successfully.', kind: 'success' });
+        setGenForm(f => ({ ...f, topic: '', context: '' }));
+        setTimeout(() => setGenStatus({ msg: '', kind: 'info' }), 4000);
+      }
+    } catch(e) {
+      setGenStatus({ msg: 'Error: ' + e.message, kind: 'error' });
+    }
+    setGenerating(false);
+  }
+
+  async function updatePostStatus(id, status) {
+    const { error } = await sb.from('posts').update({ status }).eq('id', id);
+    if (!error) {
+      setPosts(prev => prev.map(p => p.id === id ? { ...p, status } : p));
+      if (selectedPost?.id === id) setSelectedPost(prev => ({ ...prev, status }));
+    }
+  }
+
+  async function savePostContent() {
+    if (!selectedPost) return;
+    const { error } = await sb.from('posts').update({ content: editContent }).eq('id', selectedPost.id);
+    if (!error) {
+      setPosts(prev => prev.map(p => p.id === selectedPost.id ? { ...p, content: editContent } : p));
+      setSelectedPost(prev => ({ ...prev, content: editContent }));
+    }
+  }
+
+  async function deletePost() {
+    if (!selectedPost) return;
+    if (!confirm('Delete this draft? This cannot be undone.')) return;
+    const { error } = await sb.from('posts').delete().eq('id', selectedPost.id);
+    if (!error) {
+      setPosts(prev => prev.filter(p => p.id !== selectedPost.id));
+      setSelectedPost(null);
+    }
+  }
+
+  function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }
+
+  function openPost(post) {
+    setSelectedPost(post);
+    setEditContent(post.content);
+  }
+
+  const weekDates = getWeekDates(weekBase);
+  const filteredPosts = posts.filter(p => filterAccount === 'all' || p.account === filterAccount);
+  const stats = {
+    total: filteredPosts.length,
+    draft: filteredPosts.filter(p => p.status === 'draft').length,
+    reviewed: filteredPosts.filter(p => p.status === 'reviewed').length,
+    ready: filteredPosts.filter(p => p.status === 'ready').length,
+    thisWeek: filteredPosts.filter(p => {
+      const d = new Date(p.scheduled_date + 'T12:00:00');
+      return weekDates.some(wd => formatDate(wd) === formatDate(d));
+    }).length,
+  };
+
+  if (loading) return (
+    <div className="login-screen">
+      <div style={{textAlign:'center',color:'var(--text-muted)'}}>
+        <div className="spinner" style={{margin:'0 auto',width:24,height:24,borderWidth:3}}/>
+        <p style={{marginTop:12,fontSize:14}}>Loading...</p>
+      </div>
+    </div>
+  );
+
+  if (!session) return (
+    <div className="login-screen">
+      <div className="login-card">
+        <div className="login-mark">Gray <span>Team</span></div>
+        <p>Content portal for Castor Ventures.<br/>Sign in to access drafts, calendar, and review.</p>
+        <button className="btn-google" onClick={signIn}>
+          <svg className="google-icon" viewBox="0 0 18 18">
+            <path fill="#4285F4" d="M16.51 8H8.98v3h4.3c-.18 1-.74 1.48-1.6 2.04v2.01h2.6a7.8 7.8 0 002.38-5.88c0-.57-.05-.66-.15-1.18z"/>
+            <path fill="#34A853" d="M8.98 17c2.16 0 3.97-.72 5.3-1.94l-2.6-2.04a4.8 4.8 0 01-7.18-2.54H1.83v2.07A8 8 0 008.98 17z"/>
+            <path fill="#FBBC05" d="M4.5 10.49a4.8 4.8 0 010-3.07V5.35H1.83a8 8 0 000 7.28l2.67-2.14z"/>
+            <path fill="#EA4335" d="M8.98 4.18c1.17 0 2.23.4 3.06 1.2l2.3-2.3A8 8 0 001.83 5.35L4.5 7.42a4.77 4.77 0 014.48-3.24z"/>
+          </svg>
+          Sign in with Google
+        </button>
+        <div className="login-footer">Alumni Ventures · MIT Community</div>
+      </div>
+    </div>
+  );
+
+  const userInitials = (session.user.email || 'U')[0].toUpperCase();
+
+  return (
+    <div className="app">
+      <div className="topbar">
+        <div className="topbar-logo">Gray <span>Team</span></div>
+        <div className="topbar-right">
+          <span className="user-name">{session.user.email}</span>
+          <div className="avatar">{userInitials}</div>
+          <button className="signout-btn" onClick={signOut}>Sign out</button>
+        </div>
+      </div>
+
+      <div className="nav">
+        <button className={`nav-tab ${tab==='calendar'?'active':''}`} onClick={() => setTab('calendar')}>Calendar</button>
+        <button className={`nav-tab ${tab==='queue'?'active':''}`} onClick={() => setTab('queue')}>All Drafts</button>
+        <button className={`nav-tab ${tab==='generate'?'active':''}`} onClick={() => setTab('generate')}>Generate</button>
+      </div>
+
+      <div className="main">
+
+        <div className="stats-row">
+          <div className="stat-card"><div className="stat-num">{stats.total}</div><div className="stat-label">Total drafts</div></div>
+          <div className="stat-card"><div className="stat-num">{stats.thisWeek}</div><div className="stat-label">This week</div></div>
+          <div className="stat-card"><div className="stat-num">{stats.draft}</div><div className="stat-label">Awaiting review</div></div>
+          <div className="stat-card"><div className="stat-num">{stats.reviewed}</div><div className="stat-label">Reviewed</div></div>
+          <div className="stat-card"><div className="stat-num">{stats.ready}</div><div className="stat-label">Ready to post</div></div>
+        </div>
+
+        <div className="filter-bar">
+          <div className="filter-label">Account:</div>
+          <button className={`filter-chip ${filterAccount==='all'?'active':''}`} onClick={() => setFilterAccount('all')}>All</button>
+          {ACCOUNTS.map(a => (
+            <button key={a.id} className={`filter-chip ${a.color} ${filterAccount===a.id?'active':''}`} onClick={() => setFilterAccount(a.id)}>{a.short}</button>
+          ))}
+        </div>
+
+        {tab === 'calendar' && (
+          <>
+            <div className="calendar-header">
+              <h2>{MONTHS[weekBase.getMonth()]} {weekBase.getFullYear()}</h2>
+              <div className="cal-nav">
+                <button className="arrow" onClick={() => { const d = new Date(weekBase); d.setDate(d.getDate()-7); setWeekBase(d); }}>‹</button>
+                <button className="today-btn" onClick={() => setWeekBase(new Date())}>Today</button>
+                <button className="arrow" onClick={() => { const d = new Date(weekBase); d.setDate(d.getDate()+7); setWeekBase(d); }}>›</button>
+              </div>
+            </div>
+
+            <div className="week-grid">
+              {weekDates.map((d, i) => (
+                <div className="day-header" key={'h'+i}>
+                  <div className="dow">{DAYS[i]}</div>
+                  <div className={`date ${isToday(d)?'today':''}`}>{d.getDate()}</div>
+                </div>
+              ))}
+              {weekDates.map((d, i) => {
+                const dayPosts = filteredPosts.filter(p => p.scheduled_date === formatDate(d));
+                return (
+                  <div className={`day-col ${isToday(d)?'today-col':''}`} key={'c'+i}>
+                    {dayPosts.map(p => {
+                      const acc = getAccountInfo(p.account);
+                      return (
+                        <div key={p.id} className={`post-chip chip-${acc.color}`} onClick={() => openPost(p)}>
+                          <div className="chip-account">{acc.short} · {p.type.replace('LinkedIn ', 'LI ')}</div>
+                          <div className="chip-title">{p.title}</div>
+                          <div className="chip-status">{p.status === 'draft' ? '○ Draft' : p.status === 'reviewed' ? '◐ Reviewed' : '● Ready'}</div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })}
+            </div>
+          </>
+        )}
+
+        {tab === 'queue' && (
+          <div className="queue-list">
+            {filteredPosts.length === 0 && (
+              <div className="empty-state">
+                <h3>No drafts yet</h3>
+                <p>Head over to Generate to create your first AI-drafted post.</p>
+              </div>
+            )}
+            {filteredPosts.map(p => {
+              const acc = getAccountInfo(p.account);
+              return (
+                <div className="queue-card" key={p.id} onClick={() => openPost(p)}>
+                  <div className="queue-card-left">
+                    <div className="queue-card-meta">
+                      <span className={`account-badge chip-${acc.color}`}>{acc.label}</span>
+                      <span className="type-badge">{p.type}</span>
+                    </div>
+                    <div className="queue-card-title">{p.title}</div>
+                    <div className="queue-card-preview">{p.content}</div>
+                    <div className="queue-card-footer">
+                      <span className="queue-card-date">Scheduled: {new Date(p.scheduled_date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                    </div>
+                  </div>
+                  <div className="queue-card-right">
+                    <span className={`status-badge status-${p.status}`}>{p.status === 'draft' ? 'Draft' : p.status === 'reviewed' ? 'Reviewed' : 'Ready'}</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {tab === 'generate' && (
+          <div className="generate-panel">
+            <div className="generate-panel-header">
+              <div>
+                <h3>Generate a draft</h3>
+                <p>The AI uses the Gray Team brand and voice context to draft a post.</p>
+              </div>
+            </div>
+            <div className="generate-form">
+              <div className="form-group">
+                <label>Account</label>
+                <select className="form-select" value={genForm.account} onChange={e => setGenForm(f => ({ ...f, account: e.target.value }))}>
+                  {ACCOUNTS.map(a => <option key={a.id} value={a.id}>{a.label}</option>)}
+                </select>
+              </div>
+              <div className="form-group">
+                <label>Type</label>
+                <select className="form-select" value={genForm.type} onChange={e => setGenForm(f => ({ ...f, type: e.target.value }))}>
+                  {(ACCOUNTS.find(a => a.id === genForm.account)?.types || []).map(t => <option key={t} value={t}>{t}</option>)}
+                </select>
+              </div>
+              <div className="form-group">
+                <label>Schedule date (optional)</label>
+                <input className="form-input" type="date" value={genForm.date} onChange={e => setGenForm(f => ({ ...f, date: e.target.value }))}/>
+              </div>
+              <div className="form-group form-group-full">
+                <label>Topic / News item</label>
+                <input className="form-input" type="text" placeholder="e.g., OpenAI launches new model, MIT researchers publish quantum breakthrough, Portfolio company X raises Series B" value={genForm.topic} onChange={e => setGenForm(f => ({ ...f, topic: e.target.value }))}/>
+              </div>
+              <div className="form-group form-group-full">
+                <label>Additional context (optional)</label>
+                <textarea className="form-textarea" placeholder="Paste article text, additional details, angle you want to take, etc." value={genForm.context} onChange={e => setGenForm(f => ({ ...f, context: e.target.value }))}/>
+              </div>
+            </div>
+            <div style={{display:'flex',justifyContent:'flex-end'}}>
+              <button className="btn-generate" onClick={generatePost} disabled={generating}>
+                {generating ? <><div className="spinner"/> Generating...</> : <>✦ Generate Draft</>}
+              </button>
+            </div>
+            {genStatus.msg && (
+              <div className={`generate-status ${genStatus.kind}`}>
+                {genStatus.kind === 'info' && <div className="spinner"/>}
+                {genStatus.msg}
+              </div>
+            )}
+          </div>
+        )}
+
+      </div>
+
+      {selectedPost && (
+        <div className="modal-overlay" onClick={() => setSelectedPost(null)}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <div className="modal-header-left">
+                <div className="modal-header-meta">
+                  <span className={`account-badge chip-${getAccountInfo(selectedPost.account).color}`}>{getAccountInfo(selectedPost.account).label}</span>
+                  <span className="type-badge">{selectedPost.type}</span>
+                  <span className={`status-badge status-${selectedPost.status}`}>{selectedPost.status === 'draft' ? 'Draft' : selectedPost.status === 'reviewed' ? 'Reviewed' : 'Ready'}</span>
+                </div>
+                <div className="modal-title">{selectedPost.title}</div>
+              </div>
+              <button className="modal-close" onClick={() => setSelectedPost(null)}>×</button>
+            </div>
+            <div className="modal-body">
+              <div className="modal-section">
+                <div className="modal-section-label">
+                  Post copy
+                  <button className={`copy-btn ${copied?'copied':''}`} onClick={() => copyToClipboard(editContent)}>{copied ? '✓ Copied' : 'Copy to clipboard'}</button>
+                </div>
+                <textarea className="post-textarea" value={editContent} onChange={e => setEditContent(e.target.value)}/>
+                {editContent !== selectedPost.content && (
+                  <div style={{marginTop:8,display:'flex',gap:8}}>
+                    <button className="btn btn-sm btn-primary" onClick={savePostContent}>Save changes</button>
+                    <button className="btn btn-sm btn-secondary" onClick={() => setEditContent(selectedPost.content)}>Discard</button>
+                  </div>
+                )}
+              </div>
+              {selectedPost.hashtags?.length > 0 && (
+                <div className="modal-section">
+                  <div className="modal-section-label">Suggested hashtags</div>
+                  <div className="tags-row">
+                    {selectedPost.hashtags.map((t,i) => <span className="tag" key={i}>#{t.replace(/^#/, '')}</span>)}
+                  </div>
+                </div>
+              )}
+              {selectedPost.source_note && (
+                <div className="modal-section">
+                  <div className="modal-section-label">Source / Inspired by</div>
+                  <div className="source-box">{selectedPost.source_note}</div>
+                </div>
+              )}
+              <div className="modal-section">
+                <div className="modal-section-label">Scheduled</div>
+                <div style={{fontSize:14,color:'var(--text)'}}>{new Date(selectedPost.scheduled_date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}</div>
+              </div>
+            </div>
+            <div className="modal-footer">
+              <div className="modal-footer-left">
+                {selectedPost.status === 'draft' && (
+                  <button className="btn btn-sm btn-green" onClick={() => updatePostStatus(selectedPost.id, 'reviewed')}>Mark Reviewed</button>
+                )}
+                {selectedPost.status === 'reviewed' && (
+                  <>
+                    <button className="btn btn-sm btn-primary" onClick={() => updatePostStatus(selectedPost.id, 'ready')}>Mark Ready to Post</button>
+                    <button className="btn btn-sm btn-secondary" onClick={() => updatePostStatus(selectedPost.id, 'draft')}>Back to Draft</button>
+                  </>
+                )}
+                {selectedPost.status === 'ready' && (
+                  <button className="btn btn-sm btn-secondary" onClick={() => updatePostStatus(selectedPost.id, 'reviewed')}>Back to Reviewed</button>
+                )}
+              </div>
+              <div className="modal-footer-right">
+                <button className="btn btn-sm btn-danger" onClick={deletePost}>Delete</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+    </div>
+  );
+};
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
