@@ -318,6 +318,14 @@ const App = () => {
       }
 
       const parsed = await fnRes.json();
+      console.log('Edge function raw response:', JSON.stringify(parsed));
+
+      if (parsed.error) {
+        throw new Error('AI error: ' + parsed.error);
+      }
+      if (!parsed.content || parsed.content.trim() === '') {
+        throw new Error('Empty content returned. Check console for raw response.');
+      }
 
       const sched = genForm.date ? new Date(genForm.date + 'T12:00:00') : (() => {
         const t = new Date();
@@ -329,7 +337,7 @@ const App = () => {
         account: genForm.account,
         type: genForm.type,
         title: parsed.title || genForm.topic.slice(0, 80),
-        content: parsed.content || '',
+        content: (parsed.content || '').trim(),
         hashtags: parsed.hashtags || [],
         source_note: parsed.source_note || genForm.topic,
         status: 'draft',
