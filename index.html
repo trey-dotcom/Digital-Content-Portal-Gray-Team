@@ -298,19 +298,26 @@ const App = () => {
     setGenStatus({ msg: 'Generating draft...', kind: 'info' });
 
     try {
-      const { data: fnData, error: fnError } = await sb.functions.invoke('generate-content', {
-        body: {
+      const fnRes = await fetch('https://wtplzoqcssoualhazshq.supabase.co/functions/v1/generate-content', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({
           account: genForm.account,
           type: genForm.type,
           topic: genForm.topic,
           context: genForm.context,
-        }
+        })
       });
 
-      if (fnError) throw new Error(fnError.message);
-      if (!fnData) throw new Error('No response from generation function.');
+      if (!fnRes.ok) {
+        const errText = await fnRes.text();
+        throw new Error(`Function error ${fnRes.status}: ${errText}`);
+      }
 
-      const parsed = fnData;
+      const parsed = await fnRes.json();
 
       const sched = genForm.date ? new Date(genForm.date + 'T12:00:00') : (() => {
         const t = new Date();
